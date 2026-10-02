@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 220 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 16% 93%;
+    --secondary-foreground: 220 25% 10%;
+    --muted: 210 16% 95%;
+    --muted-foreground: 220 10% 46%;
+    --accent: 168 76% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 199 89% 48%;
+    --chart-1: 199 89% 48%;
+    --chart-2: 168 76% 42%;
+    --chart-3: 262 60% 58%;
+    --chart-4: 43 96% 56%;
+    --chart-5: 348 83% 60%;
+    --radius: 0.75rem;
+    --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sidebar-background: 220 25% 10%;
+    --sidebar-foreground: 210 16% 93%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 16%;
+    --sidebar-accent-foreground: 210 16% 93%;
+    --sidebar-border: 220 20% 18%;
+    --sidebar-ring: 199 89% 48%;
+  }
+
+  .dark {
+    --background: 220 25% 6%;
+    --foreground: 210 16% 95%;
+    --card: 220 25% 10%;
+    --card-foreground: 210 16% 95%;
+    --popover: 220 25% 10%;
+    --popover-foreground: 210 16% 95%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 16%;
+    --secondary-foreground: 210 16% 95%;
+    --muted: 220 20% 14%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 168 76% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 199 89% 48%;
+    --chart-1: 199 89% 55%;
+    --chart-2: 168 76% 50%;
+    --chart-3: 262 60% 65%;
+    --chart-4: 43 96% 60%;
+    --chart-5: 348 83% 65%;
+    --sidebar-background: 220 25% 6%;
+    --sidebar-foreground: 210 16% 93%;
+    --sidebar-primary: 199 89% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 12%;
+    --sidebar-accent-foreground: 210 16% 93%;
+    --sidebar-border: 220 20% 14%;
+    --sidebar-ring: 199 89% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    overscroll-behavior: none;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Disable text selection on interactive elements */
+  button, a, [role="button"], svg {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+/* Distance input on the tracker: font-size must stay at 16px so iOS Safari
+   doesn't zoom the page on focus, but 16px is too wide to fit 4 digits in a
+   1/7-width day column. Scaling the rendered text down (rather than lowering
+   font-size) keeps the anti-zoom threshold while still fitting up to "9999". */
+.distance-input {
+  font-size: 16px;
+  padding: 6px 0 !important;
+  min-width: 0;
+  box-sizing: border-box;
+  transform: scale(0.62);
+}

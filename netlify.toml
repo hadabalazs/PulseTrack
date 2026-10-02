@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# PulseTrack is a single-page app: deep links like /stats and /settings must
+# serve index.html, otherwise a refresh on those routes 404s.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
