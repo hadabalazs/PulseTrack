@@ -10,6 +10,7 @@ import WorkoutChart from "@/components/stats/WorkoutChart";
 import ExerciseBreakdown from "@/components/stats/ExerciseBreakdown";
 import ExportButton from "@/components/stats/ExportButton";
 import MonthlyCalendar from "@/components/stats/MonthlyCalendar";
+import RecordHistory from "@/components/stats/RecordHistory";
 import DistanceStats from "@/components/stats/DistanceStats";
 import SportFilter from "@/components/stats/SportFilter";
 import WeeklyGoalCard from "@/components/stats/WeeklyGoalCard";
@@ -116,6 +117,8 @@ export default function Stats() {
       {appSettings.trackDistance && (
         <DistanceStats logs={filteredLogs} weeklyRange={appSettings.distanceChartRange} onWeeklyRangeChange={(v) => updateSetting("distanceChartRange", v)} />
       )}
+
+      {appSettings.trackDistance && <RecordHistory logs={filteredLogs} />}
 
       {hasArchivedHistory && (
         <div className="space-y-2">

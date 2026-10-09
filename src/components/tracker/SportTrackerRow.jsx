@@ -1,9 +1,10 @@
 import { useState, useMemo, useCallback, useRef, useEffect, memo } from "react";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
-import { X, ChevronDown, Check, Flame, Dumbbell, Ruler } from "lucide-react";
+import { X, ChevronDown, Check, Flame, Dumbbell, Ruler, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SETTLE_MS } from "@/components/tracker/SwipeableWeek";
+import { distanceRecords } from "@/lib/distanceRecords";
 import { logKey, logDate } from "@/lib/dates";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -57,19 +58,23 @@ const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftV
           <button
             type="button"
             onClick={() => interactive && onToggle(day.date)}
+            aria-pressed={day.isCompleted}
+            aria-label={`${day.date}${day.isRecord ? `, distance record: ${day.distance} metres` : ""}`}
             className={cn(
               "flex flex-col items-center gap-1.5 p-2 rounded-2xl border transition-colors duration-200",
-              day.isCompleted
+              day.isRecord
+                ? "bg-amber-400 text-amber-950 border-amber-500 shadow-sm shadow-amber-500/20"
+                : day.isCompleted
                 ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
                 : "bg-muted/40 border-border hover:border-primary/30",
               day.isToday && !day.isCompleted && "ring-2 ring-primary/30 ring-offset-1 ring-offset-background"
             )}
           >
-            <span className={cn("text-[10px] font-medium", day.isCompleted ? "text-primary-foreground/80" : "text-muted-foreground")}>{day.name}</span>
-            <span className={cn("text-sm font-bold", day.isCompleted ? "text-primary-foreground" : "text-foreground")}>{day.dayNumber}</span>
-            <div className={cn("w-4 h-4 rounded-md border-2 flex items-center justify-center", day.isCompleted ? "bg-primary-foreground/20 border-primary-foreground" : "border-muted-foreground/30")}>
+            <span className={cn("text-[10px] font-medium", day.isRecord ? "text-amber-950/80" : day.isCompleted ? "text-primary-foreground/80" : "text-muted-foreground")}>{day.name}</span>
+            <span className={cn("text-sm font-bold", day.isRecord ? "text-amber-950" : day.isCompleted ? "text-primary-foreground" : "text-foreground")}>{day.dayNumber}</span>
+            {day.isRecord ? <Trophy className="w-4 h-4 text-amber-950" aria-hidden="true" /> : <div className={cn("w-4 h-4 rounded-md border-2 flex items-center justify-center", day.isCompleted ? "bg-primary-foreground/20 border-primary-foreground" : "border-muted-foreground/30")}>
               {day.isCompleted && <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />}
-            </div>
+            </div>}
           </button>
 
           {trackDistance && day.isCompleted && (
@@ -104,6 +109,8 @@ export default function SportTrackerRow({
 
   const exerciseLogs = useMemo(() => logs.filter(l => l.exercise === sport), [logs, sport]);
 
+  const recordIds = useMemo(() => new Set(distanceRecords(exerciseLogs).map(log => log.id)), [exerciseLogs]);
+
   const logByDate = useMemo(() => {
     const m = {};
     exerciseLogs.forEach(l => { m[logKey(l)] = l; });
@@ -119,10 +126,11 @@ export default function SportTrackerRow({
       date: dateStr,
       dayNumber: format(date, "d"),
       isCompleted: !!log,
+      isRecord: !!log && recordIds.has(log.id),
       isToday: isSameDay(date, new Date()),
       distance: log?.distance ?? null,
     };
-  }), [logByDate]);
+  }), [logByDate, recordIds]);
 
   const weeks = useMemo(
     () => [subWeeks(currentWeekStart, 1), currentWeekStart, addWeeks(currentWeekStart, 1)],
@@ -228,6 +236,10 @@ export default function SportTrackerRow({
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
           <Ruler className="w-3 h-3" /><span>Enter distance in metres below each session</span>
         </div>
+      )}
+
+      {currentDays.some(day => day.isRecord) && (
+        <p className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><Trophy className="w-3 h-3 text-amber-500" />Gold = a new distance record on that day</p>
       )}
 
       <div className="flex gap-3">
