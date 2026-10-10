@@ -25,6 +25,12 @@ function GoalRing({ total, goal, reached }) {
   const pct = goal > 0 ? Math.min(total / goal, 1) : 0;
   const offset = C * (1 - pct);
   const size = (R + STROKE) * 2;
+  const totalLabel = fmt(total);
+  const goalLabel = fmt(goal);
+  // Keep longer distances inside the ring’s inner area, including its curved edges.
+  const labelWidth = 112;
+  const totalFontSize = Math.min(30, 140 / totalLabel.length);
+  const goalFontSize = Math.min(14, 140 / goalLabel.length);
   return (
     <div className="relative mx-auto" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -34,8 +40,10 @@ function GoalRing({ total, goal, reached }) {
           style={{ transition: "stroke-dashoffset 700ms cubic-bezier(0.22,0.61,0.36,1)" }} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p className="font-display text-3xl font-bold leading-none">{fmt(total)}</p>
-        <p className="text-sm text-muted-foreground mt-1">{fmt(goal)}</p>
+        <p className="font-display font-bold leading-none text-center whitespace-nowrap tabular-nums"
+          style={{ width: labelWidth, fontSize: totalFontSize }}>{totalLabel}</p>
+        <p className="text-muted-foreground mt-1 text-center whitespace-nowrap tabular-nums"
+          style={{ width: labelWidth, fontSize: goalFontSize }}>{goalLabel}</p>
         {reached && <Check className="w-6 h-6 mt-1.5" strokeWidth={3} style={{ color: GREEN }} />}
       </div>
     </div>
