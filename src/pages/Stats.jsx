@@ -118,7 +118,12 @@ export default function Stats() {
         <DistanceStats logs={filteredLogs} weeklyRange={appSettings.distanceChartRange} onWeeklyRangeChange={(v) => updateSetting("distanceChartRange", v)} />
       )}
 
-      {appSettings.trackDistance && <RecordHistory logs={filteredLogs} />}
+      {appSettings.trackDistance && (
+        <>
+          <RecordHistory logs={filteredLogs} />
+          <RecordHistory logs={filteredLogs} weekly />
+        </>
+      )}
 
       {hasArchivedHistory && (
         <div className="space-y-2">
