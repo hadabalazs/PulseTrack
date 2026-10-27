@@ -48,6 +48,8 @@ export default function WeeklyTracker() {
                 canRemove={trackerSports.length > 1}
                 isPrimary={idx === 0}
                 trackDistance={appSettings.trackDistance}
+                showSessionHighlights={appSettings.showSessionHighlights}
+                sessionHighlightColor={appSettings.sessionHighlightColor}
                 dragX={dragX}
                 phase={phase}
               />

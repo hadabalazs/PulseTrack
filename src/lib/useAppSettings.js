@@ -5,6 +5,8 @@ import { useStorageSync } from "@/lib/useStorageSync";
 const SETTINGS_KEY = "pulsetrack_app_settings";
 const DEFAULTS = {
   trackDistance: false,
+  showSessionHighlights: true,
+  sessionHighlightColor: "#3b82f6",
   statsSportFilter: "all",
   weeklyDistanceGoals: {},
   workoutsChartRange: "12w",

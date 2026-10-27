@@ -47,7 +47,7 @@ function SportSelector({ sport, id, onSportChange, isMobile, drawerOpen, setDraw
   );
 }
 
-const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftValues, onToggle, onDistanceChange }) {
+const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftValues, onToggle, onDistanceChange, showSessionHighlights, sessionHighlightColor }) {
   return (
     <div
       className={cn("grid grid-cols-7 gap-1.5 shrink-0", !interactive && "pointer-events-none")}
@@ -58,8 +58,9 @@ const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftV
           <button
             type="button"
             onClick={() => interactive && onToggle(day.date)}
+            style={day.isHighlighted && showSessionHighlights ? { outline: `2px solid ${sessionHighlightColor}`, outlineOffset: "-2px" } : undefined}
             aria-pressed={day.isCompleted}
-            aria-label={`${day.date}${day.isRecord ? `, distance record: ${day.distance} metres` : ""}`}
+            aria-label={`${day.date}${day.isHighlighted ? ", highlighted session" : ""}${day.isRecord ? `, distance record: ${day.distance} metres` : ""}`}
             className={cn(
               "flex flex-col items-center gap-1.5 p-2 rounded-2xl border transition-colors duration-200",
               day.isRecord
@@ -100,6 +101,7 @@ const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftV
 export default function SportTrackerRow({
   trackerSport, logs, addLog, removeLog, updateLog, currentWeekStart,
   onSportChange, onRemove, canRemove, isPrimary, trackDistance,
+  showSessionHighlights, sessionHighlightColor,
   dragX = 0, phase = "idle",
 }) {
   const isMobile = useIsMobile();
@@ -126,6 +128,9 @@ export default function SportTrackerRow({
       date: dateStr,
       dayNumber: format(date, "d"),
       isCompleted: !!log,
+      logId: log?.id,
+      isHighlighted: !!log?.highlighted,
+      excludePayment: !!log?.excludePayment,
       isRecord: !!log && recordIds.has(log.id),
       isToday: isSameDay(date, new Date()),
       distance: log?.distance ?? null,
@@ -223,6 +228,8 @@ export default function SportTrackerRow({
                 days={weekDays[i]}
                 interactive={isCurrent && phase === "idle"}
                 trackDistance={trackDistance}
+                showSessionHighlights={showSessionHighlights}
+                sessionHighlightColor={sessionHighlightColor}
                 draftValues={isCurrent ? draftValues : EMPTY_DRAFTS}
                 onToggle={handleToggle}
                 onDistanceChange={handleDistanceChange}
@@ -231,6 +238,31 @@ export default function SportTrackerRow({
           })}
         </div>
       </div>
+
+      {currentDays.some(day => day.isCompleted) && (
+        <details className="rounded-xl border bg-muted/20 p-3">
+          <summary className="cursor-pointer text-xs font-medium select-none">Session options</summary>
+          <div className="mt-3 space-y-3">
+            {currentDays.filter(day => day.isCompleted).map(day => (
+              <fieldset key={day.logId} className="space-y-1">
+                <legend className="text-xs font-medium">{day.name} {day.dayNumber}</legend>
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  <label className="flex items-center gap-2 py-2 text-xs cursor-pointer">
+                    <input type="checkbox" checked={day.excludePayment}
+                      onChange={e => updateLog(day.logId, { excludePayment: e.target.checked })} />
+                    Exclude Payment
+                  </label>
+                  <label className="flex items-center gap-2 py-2 text-xs cursor-pointer">
+                    <input type="checkbox" checked={day.isHighlighted}
+                      onChange={e => updateLog(day.logId, { highlighted: e.target.checked })} />
+                    Highlight Session
+                  </label>
+                </div>
+              </fieldset>
+            ))}
+          </div>
+        </details>
+      )}
 
       {trackDistance && currentDays.some(d => d.isCompleted) && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">

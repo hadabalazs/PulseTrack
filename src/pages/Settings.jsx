@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Moon, Smartphone, Dumbbell, Download, Upload, CheckCircle, AlertCircle, Ruler, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function Toggle({ checked, onChange }) {
+function Toggle({ checked, onChange, label }) {
   return (
-    <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
+    <button type="button" role="switch" aria-label={label} aria-checked={checked} onClick={() => onChange(!checked)}
       className={cn("relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none select-none", checked?"bg-primary":"bg-muted")}>
       <span className={cn("pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200", checked?"translate-x-5":"translate-x-0")}/>
     </button>
@@ -93,8 +93,22 @@ export default function Settings() {
         </div>
         <div className="flex items-center justify-between py-1">
           <div><p className="text-sm font-medium">Track distance (metres)</p><p className="text-xs text-muted-foreground mt-0.5">Log exercise distance and see distance stats</p></div>
-          <Toggle checked={appSettings.trackDistance} onChange={v=>updateSetting("trackDistance",v)}/>
+          <Toggle label="Track distance (metres)" checked={appSettings.trackDistance} onChange={v=>updateSetting("trackDistance",v)}/>
         </div>
+      </div>
+
+      <div className="rounded-2xl bg-card border p-6 space-y-4">
+        <div><h3 className="font-display font-semibold">Session Highlights</h3><p className="text-sm text-muted-foreground mt-1">Mark individual sessions in the tracker's Session options.</p></div>
+        <div className="flex items-center justify-between gap-3">
+          <div><p className="text-sm font-medium">Show highlighted outlines</p><p className="text-xs text-muted-foreground mt-0.5">Hiding outlines keeps your marked sessions saved.</p></div>
+          <Toggle label="Show highlighted outlines" checked={appSettings.showSessionHighlights} onChange={v => updateSetting("showSessionHighlights", v)} />
+        </div>
+        <label className="flex items-center justify-between gap-3 text-sm font-medium">
+          Outline color
+          <input type="color" value={appSettings.sessionHighlightColor}
+            onChange={e => updateSetting("sessionHighlightColor", e.target.value)}
+            className="h-10 w-14 rounded-lg border bg-background cursor-pointer" />
+        </label>
       </div>
 
       <div className="rounded-2xl bg-card border p-6 space-y-4">

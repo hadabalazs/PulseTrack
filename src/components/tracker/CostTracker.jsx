@@ -15,7 +15,7 @@ function parseDateSafe(str) { if(!str)return null; const d=parseISO(str); return
 function countSessionsInPeriod(entry, logs) {
   const start = parseDateSafe(entry.startDate), end = parseDateSafe(entry.endDate);
   return logs.filter(l => {
-    if (l.exercise !== entry.sport) return false;
+    if (l.exercise !== entry.sport || l.excludePayment) return false;
     if (!start || !end) return true;
     const ld = logDate(l);
     return ld && isWithinInterval(ld, { start, end });
@@ -130,7 +130,7 @@ function SportCostRow({ entry, logs, onUpdate, onRemove, onArchive, onDeleteHist
   const start=parseDateSafe(entry.startDate), end=parseDateSafe(entry.endDate);
   const sessionCount=countSessionsInPeriod(entry, logs);
   const { yc, spent: totalSpent, remaining, broken, pct } = computeSpend(entry, sessionCount);
-  const allTimeCount=logs.filter(l=>l.exercise===entry.sport).length;
+  const allTimeCount=logs.filter(l=>l.exercise===entry.sport && !l.excludePayment).length;
 
   const handleArchive = () => {
     const today = new Date().toISOString().slice(0, 10);
