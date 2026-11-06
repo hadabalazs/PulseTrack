@@ -1,13 +1,15 @@
 import { useMemo } from "react";
-import { format, startOfWeek, endOfWeek, subWeeks, isWithinInterval } from "date-fns";
+import { addDays, endOfDay, format, isValid, startOfWeek, endOfWeek, subWeeks, isWithinInterval } from "date-fns";
 import { Ruler, TrendingUp, Trophy, Zap, CalendarDays, CalendarRange, CalendarClock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 import RangeSelector, { rangeCutoff } from "@/components/stats/RangeSelector";
+import { weeklyDistances } from "@/lib/weeklyDistances";
 import { logDate } from "@/lib/dates";
 
 function fmt(m) {
-  if (m == null || isNaN(m) || m === 0) return "—";
+  if (m == null || isNaN(m) || m < 0) return "—";
+  if (m === 0) return "0 m";
   if (m >= 1000) return `${(m / 1000).toFixed(2)} km`;
   return `${Math.round(m)} m`;
 }
@@ -62,7 +64,11 @@ function WeekCompareCard({ label, sessions, totalDist, avgDist, isCurrentWeek })
 }
 
 export default function DistanceStats({ logs, weeklyRange = "all", onWeeklyRangeChange }) {
-  const logsWithDistance = useMemo(() => logs.filter((l) => l.distance != null && l.distance > 0), [logs]);
+  const today = format(new Date(), "yyyy-MM-dd");
+  const logsWithDistance = useMemo(() => logs.filter((l) => {
+    const date = logDate(l);
+    return Number.isFinite(l.distance) && l.distance > 0 && isValid(date) && date <= endOfDay(logDate({ date: today }));
+  }), [logs, today]);
 
   const now = new Date();
   const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 });
@@ -96,17 +102,11 @@ export default function DistanceStats({ logs, weeklyRange = "all", onWeeklyRange
     return map;
   }, [logsWithDistance]);
 
-  const weeklyData = useMemo(() => {
-    const cutoff = rangeCutoff(weeklyRange);
-    const scoped = cutoff ? logsWithDistance.filter((l) => logDate(l) >= cutoff) : logsWithDistance;
-    const weekMap = {};
-    scoped.forEach((l) => {
-      const monday = startOfWeek(logDate(l), { weekStartsOn: 1 });
-      const key = format(monday, "MMM d");
-      weekMap[key] = (weekMap[key] || 0) + l.distance;
-    });
-    return Object.entries(weekMap).map(([week, total]) => ({ week, total: Math.round(total) }));
-  }, [logsWithDistance, weeklyRange]);
+  const weeklySummary = weeklyDistances(logsWithDistance, now);
+  const cutoff = rangeCutoff(weeklyRange);
+  const weeklyData = weeklySummary.weeks
+    .filter(week => !cutoff || week.date >= cutoff)
+    .map(week => ({ ...week, week: format(week.date, "MMM d, yyyy") }));
 
   const totalDistance = logsWithDistance.reduce((s, l) => s + l.distance, 0);
   const bestSession = logsWithDistance.reduce((best, l) => (l.distance > best ? l.distance : best), 0);
@@ -129,13 +129,28 @@ export default function DistanceStats({ logs, weeklyRange = "all", onWeeklyRange
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">All Time</p>
         <div className="grid grid-cols-3 gap-2">
           <StatTile icon={TrendingUp} tone="primary" value={fmt(totalDistance)} label="Total" />
-          <StatTile icon={Trophy} tone="emerald" value={fmt(bestSession)} label="Best" />
-          <StatTile icon={Zap} tone="purple" value={fmt(avgSession)} label="Avg" sublabel="per session" />
+          <StatTile icon={Trophy} tone="emerald" value={fmt(bestSession)} label="Best Session" />
+          <StatTile icon={Zap} tone="purple" value={fmt(avgSession)} label="Avg / Session" sublabel="per session" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Recent Averages</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">All-Time Weekly Distance</p>
+        <div className="grid grid-cols-3 gap-2">
+          <StatTile icon={TrendingUp} tone="primary" value={fmt(weeklySummary.total)} label="Total Across Weeks" />
+          <StatTile icon={CalendarRange} tone="blue" value={fmt(weeklySummary.average)} label="Avg / Week" sublabel={`${weeklySummary.weeks.length} calendar weeks`} />
+          <StatTile icon={Trophy} tone="emerald" value={fmt(weeklySummary.best)} label="Best Week" />
+        </div>
+        <p className="text-xs text-muted-foreground">Monday–Sunday weeks from your first distance entry through this week, including empty weeks. This week is counted so far.</p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Recent Totals &amp; Averages</p>
+        <div className="grid grid-cols-3 gap-2">
+          <StatTile icon={CalendarRange} tone="blue" value={fmt(fourWeek.total)} label="4-Week Total" sublabel="includes this week" />
+          <StatTile icon={CalendarClock} tone="slate" value={fmt(lastWeek.total)} label="Last Week Total" />
+          <StatTile icon={CalendarDays} tone="orange" value={fmt(thisWeek.total)} label="This Week Total" sublabel="so far" />
+        </div>
         <div className="grid grid-cols-3 gap-2">
           <StatTile icon={CalendarRange} tone="blue" value={fmt(fourWeek.avg)} label="4-Week Avg" sublabel={`per session · ${fmt(fourWeek.avgPerWeek)}/wk`} />
           <StatTile icon={CalendarClock} tone="slate" value={fmt(lastWeek.avg)} label="Last Week" sublabel={`per session · ${lastWeek.sessions} sess.`} />
@@ -190,6 +205,21 @@ export default function DistanceStats({ logs, weeklyRange = "all", onWeeklyRange
             </div>
           )}
           {onWeeklyRangeChange && <RangeSelector value={weeklyRange} onChange={onWeeklyRangeChange} />}
+          <details className="rounded-xl border p-3">
+            <summary className="cursor-pointer text-sm font-semibold">Weekly totals · {weeklyData.length} weeks</summary>
+            <div className="max-h-72 overflow-y-auto mt-3">
+              <table className="w-full text-xs">
+                <thead><tr className="text-muted-foreground"><th scope="col" className="text-left py-2">Week (Mon–Sun)</th><th scope="col" className="text-right py-2">Total distance</th></tr></thead>
+                <tbody>{[...weeklyData].reverse().map(week => (
+                  <tr key={week.key} className="border-t">
+                    <td className="py-2">{format(week.date, "d MMM yyyy")} – {format(addDays(week.date, 6), "d MMM yyyy")}{week.key === format(thisWeekStart, "yyyy-MM-dd") ? " · so far" : ""}</td>
+                    <td className="py-2 text-right font-semibold tabular-nums">{fmt(week.total)}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Choose All above to see every week.</p>
+          </details>
         </div>
       )}
 
