@@ -34,7 +34,12 @@ function SportSelector({ sport, id, onSportChange, isMobile, drawerOpen, setDraw
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader><DrawerTitle>Select Sport</DrawerTitle></DrawerHeader>
-        <div className="px-4 pb-8 space-y-1 max-h-[60vh] overflow-y-auto">
+        <div
+          // Let the list scroll and its buttons receive clicks without Vaul capturing the pointer for a drag.
+          onPointerDown={e => e.stopPropagation()}
+          data-vaul-no-drag
+          className="px-4 pb-[max(2rem,env(safe-area-inset-bottom))] space-y-1 max-h-[60dvh] overflow-y-auto overscroll-contain"
+        >
           {EXERCISES.map(ex => (
             <button key={ex} type="button" onClick={() => { onSportChange(id, ex); setDrawerOpen(false); }}
               className={cn("w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-base font-medium transition-colors select-none", ex === sport ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
