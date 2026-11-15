@@ -21,6 +21,8 @@ export default function SwipeableWeek({ currentWeekStart, onWeekChange, children
   const setDrag = (v) => { dxRef.current = v; setDragX(v); };
 
   const onTouchStart = useCallback((e) => {
+    // React portal events bubble here too; picker gestures belong to the picker, not the week.
+    if (!e.currentTarget.contains(e.target)) return;
     if (e.touches.length !== 1) return;
     const tag = e.target?.tagName;
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
