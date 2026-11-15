@@ -1,9 +1,10 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { DollarSign, ChevronDown, ChevronUp, Plus, X, Merge, LayoutList, CalendarRange, RotateCcw, History, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCostTracker } from "@/lib/useCostTracker";
 import { parseISO, isWithinInterval, differenceInDays, format, isValid, addYears } from "date-fns";
 import { logDate } from "@/lib/dates";
+import SubscriptionComparison from "@/components/tracker/SubscriptionComparison";
 
 const LifetimeStatsPanel = lazy(() => import("@/components/tracker/LifetimeStatsPanel"));
 
@@ -125,7 +126,7 @@ function HistoryList({ entry, onDelete }) {
   );
 }
 
-function SportCostRow({ entry, logs, onUpdate, onRemove, onArchive, onDeleteHistory }) {
+function SportCostRow({ entry, logs, today, onUpdate, onRemove, onArchive, onDeleteHistory }) {
   const [confirmingArchive, setConfirmingArchive] = useState(false);
   const start=parseDateSafe(entry.startDate), end=parseDateSafe(entry.endDate);
   const sessionCount=countSessionsInPeriod(entry, logs);
@@ -148,6 +149,7 @@ function SportCostRow({ entry, logs, onUpdate, onRemove, onArchive, onDeleteHist
       </div>
       <DateRangeRow entry={entry} onUpdate={onUpdate}/>
       {yc>0&&<div className="space-y-1.5"><ProgressBar pct={pct} broken={broken}/><div className="flex justify-between text-xs"><span className="text-muted-foreground">{sessionCount} session{sessionCount!==1?"s":""}{ start&&end&&allTimeCount!==sessionCount&&<span className="opacity-60"> in period ({allTimeCount} all-time)</span>} · AED {fmt(totalSpent)} spent</span><span className={broken?"text-emerald-500 font-semibold":"text-destructive font-semibold"}>{broken?`+AED ${fmt(Math.abs(remaining))} saved`:`AED ${fmt(remaining)} to go`}</span></div></div>}
+      {yc > 0 && <SubscriptionComparison entry={entry} logs={logs} today={today} />}
 
       {confirmingArchive ? (
         <ArchiveConfirm entry={entry} sessionCount={sessionCount} totalSpent={totalSpent} broken={broken} onConfirm={handleArchive} onCancel={() => setConfirmingArchive(false)} />
@@ -179,6 +181,25 @@ function MergedSummary({ sports, logs }) {
 }
 
 export default function CostTracker({ logs }) {
+  const [today, setToday] = useState(() => new Date());
+  useEffect(() => {
+    let timer;
+    const refresh = () => {
+      window.clearTimeout(timer);
+      const now = new Date();
+      setToday(now);
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      timer = window.setTimeout(refresh, midnight.getTime() - now.getTime());
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
   const [addingNew,setAddingNew]=useState(false),[newSport,setNewSport]=useState(EXERCISES[0]);
   const [lifetimeOpen, setLifetimeOpen] = useState(false);
   const {settings,addSport,removeSport,updateSport,setView,setOpen,archiveAndRenew,deleteHistoryEntry}=useCostTracker();
@@ -197,8 +218,8 @@ export default function CostTracker({ logs }) {
           <button onClick={()=>setView("merged")} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all select-none",settings.view==="merged"?"bg-card text-foreground shadow-sm":"text-muted-foreground hover:text-foreground")}><Merge className="w-3.5 h-3.5"/>Merged</button>
         </div>}
         {settings.sports.length===0&&!addingNew&&<p className="text-sm text-muted-foreground text-center py-2">Add a sport to start tracking costs.</p>}
-        {(settings.view==="separate"||settings.sports.length<=1)?<div className="space-y-3">{settings.sports.map(e=><SportCostRow key={e.id} entry={e} logs={logs} onUpdate={updateSport} onRemove={removeSport} onArchive={archiveAndRenew} onDeleteHistory={deleteHistoryEntry}/>)}</div>:
-          <div className="space-y-3">{settings.sports.map(e=><SportCostRow key={e.id} entry={e} logs={logs} onUpdate={updateSport} onRemove={removeSport} onArchive={archiveAndRenew} onDeleteHistory={deleteHistoryEntry}/>)}<div className="rounded-xl border bg-primary/5 border-primary/20 p-4 space-y-2"><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Combined Progress</p><MergedSummary sports={settings.sports} logs={logs}/></div></div>}
+        {(settings.view==="separate"||settings.sports.length<=1)?<div className="space-y-3">{settings.sports.map(e=><SportCostRow key={e.id} entry={e} logs={logs} today={today} onUpdate={updateSport} onRemove={removeSport} onArchive={archiveAndRenew} onDeleteHistory={deleteHistoryEntry}/>)}</div>:
+          <div className="space-y-3">{settings.sports.map(e=><SportCostRow key={e.id} entry={e} logs={logs} today={today} onUpdate={updateSport} onRemove={removeSport} onArchive={archiveAndRenew} onDeleteHistory={deleteHistoryEntry}/>)}<div className="rounded-xl border bg-primary/5 border-primary/20 p-4 space-y-2"><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Combined Progress</p><MergedSummary sports={settings.sports} logs={logs}/></div></div>}
         {addingNew?<div className="flex items-center gap-2"><select value={newSport} onChange={e=>setNewSport(e.target.value)} className="flex-1 h-10 px-3 text-sm rounded-xl border bg-background focus:outline-none focus:ring-1 focus:ring-primary">{EXERCISES.map(ex=><option key={ex} value={ex}>{ex}</option>)}</select><button type="button" onClick={handleAddSport} className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium select-none">Add</button><button type="button" onClick={()=>setAddingNew(false)} className="h-10 px-3 rounded-xl border text-sm text-muted-foreground hover:text-foreground select-none">Cancel</button></div>:
           <button type="button" onClick={()=>setAddingNew(true)} className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-dashed text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors select-none"><Plus className="w-4 h-4"/>Add sport cost</button>}
 
