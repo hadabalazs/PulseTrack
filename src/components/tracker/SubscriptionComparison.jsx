@@ -22,7 +22,6 @@ export default function SubscriptionComparison({ entry, logs, today }) {
         {comparison.savings === null ? <p className="text-xs text-muted-foreground">Enter a session price to see the difference.</p> : <p className={cn("text-xs font-semibold", comparison.savings > 0 ? "text-emerald-500" : "text-muted-foreground")}>
           {Math.abs(comparison.savings) < 0.005 ? "Costs are equal to date" : comparison.savings > 0 ? `Subscription is ${money(comparison.savings)} cheaper to date` : `Pay-per-session is ${money(-comparison.savings)} cheaper to date`}
         </p>}
-        <p className="text-[10px] text-muted-foreground">Includes the start date and today; stops at the end date or 365 days. Excludes future sessions and sessions marked Exclude Payment.</p>
       </>}
     </section>
   );

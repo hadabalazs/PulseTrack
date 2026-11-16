@@ -12,6 +12,7 @@ PulseTrack is a responsive React app that keeps your workout history in your bro
 ## Features
 
 - **Weekly workout tracker** — log sessions by day across multiple sports, with swipe navigation between weeks.
+- **Custom sports** — add sports in Settings to use them in the tracker and subscription selectors.
 - **Optional distance tracking** — record metres per session and explore totals and rolling averages.
 - **Weekly distance goals** — set goals per sport, with goal history used for past weeks.
 - **Subscription cost tracker** — compare cost per session, follow break-even progress, and archive subscription periods while keeping lifetime statistics.
@@ -86,8 +87,9 @@ Data is stored in your browser's `localStorage`, separately for each site origin
 | `pulsetrack_app_settings` | Preferences, weekly goal history, and filters |
 | `pulsetrack_cost_tracker` | Subscriptions and archived periods |
 | `pulsetrack_tracker_sports` | Sports displayed on the tracker |
+| `pulsetrack_custom_sports` | Custom sports added in Settings |
 
-**JSON backups contain workout logs only.** Preferences, goal history, subscriptions, and tracker sports are not included. In Settings, **Merge** adds logs with new IDs; **Replace** replaces the workout log list. **Clear All Data** currently clears workout logs only.
+**JSON backups contain workout logs only.** Preferences, goal history, subscriptions, tracker sports, and custom sport lists are not included. In Settings, **Merge** adds logs with new IDs; **Replace** replaces the workout log list. **Clear All Data** currently clears workout logs only.
 
 Clearing browser site data removes the stored data. Moving to another domain or browser does not transfer it. Keep backups of workout logs you want to retain.
 
