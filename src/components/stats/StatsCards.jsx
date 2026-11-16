@@ -31,8 +31,8 @@ export default function StatsCards({ logs }) {
     { label: "Active Weeks", value: totalWeeks, icon: Calendar, color: "text-accent bg-accent/10" },
     { label: "Avg / Week", value: avgPerWeek, icon: TrendingUp, color: "text-purple-500 bg-purple-50" },
     { label: "Top Exercise", value: topExercise?.[0] || "—", icon: Flame, color: "text-chart-5 bg-red-50" },
-    { label: "Record Daily Streak", value: `${streaks.daily} ${streaks.daily === 1 ? "day" : "days"}`, description: "Longest run of consecutive workout days", icon: Flame, color: "text-orange-500 bg-orange-500/10" },
-    { label: "Record Weekly Streak", value: `${streaks.weekly} ${streaks.weekly === 1 ? "week" : "weeks"}`, description: "Consecutive Mon–Sun weeks with a workout", icon: Calendar, color: "text-blue-500 bg-blue-500/10" },
+    { label: "Record Daily Streak", value: `${streaks.daily} ${streaks.daily === 1 ? "day" : "days"}`, icon: Flame, color: "text-orange-500 bg-orange-500/10" },
+    { label: "Record Weekly Streak", value: `${streaks.weekly} ${streaks.weekly === 1 ? "week" : "weeks"}`, icon: Calendar, color: "text-blue-500 bg-blue-500/10" },
   ];
 
   return (
@@ -44,7 +44,6 @@ export default function StatsCards({ logs }) {
           </div>
           <p className="font-display text-2xl font-bold">{card.value}</p>
           <p className="text-xs text-muted-foreground mt-1">{card.label}</p>
-          {card.description && <p className="text-[10px] text-muted-foreground mt-2">{card.description}</p>}
         </div>
       ))}
     </div>

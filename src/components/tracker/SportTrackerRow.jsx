@@ -9,6 +9,7 @@ import { logKey, logDate } from "@/lib/dates";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSports } from "@/lib/useSports";
+import DailyStreakCelebration from "@/components/tracker/DailyStreakCelebration";
 
 const CENTRE = -100 / 3;
 const EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
@@ -214,6 +215,8 @@ export default function SportTrackerRow({
           </button>
         )}
       </div>
+
+      <DailyStreakCelebration logs={logs} sport={sport} />
 
       <div className="overflow-hidden -mx-1 px-1">
         <div
