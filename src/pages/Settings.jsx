@@ -4,6 +4,7 @@ import { useAppSettings } from "@/lib/useAppSettings";
 import { Button } from "@/components/ui/button";
 import { Trash2, Moon, Smartphone, Dumbbell, Download, Upload, CheckCircle, AlertCircle, Ruler, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CustomSportsSettings from "@/components/settings/CustomSportsSettings";
 
 function Toggle({ checked, onChange, label }) {
   return (
@@ -85,6 +86,8 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <div><h1 className="font-display text-2xl font-bold tracking-tight">Settings</h1><p className="text-sm text-muted-foreground mt-1">Manage your app preferences and data</p></div>
+
+      <CustomSportsSettings />
 
       <div className="rounded-2xl bg-card border p-6 space-y-4">
         <div className="flex items-start gap-3">

@@ -8,8 +8,7 @@ import { distanceRecords } from "@/lib/distanceRecords";
 import { logKey, logDate } from "@/lib/dates";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const EXERCISES = ["Running","Swimming","Cycling","Weight Training","Yoga","HIIT","Walking","Pilates","Football"];
+import { useSports } from "@/lib/useSports";
 
 const CENTRE = -100 / 3;
 const EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
@@ -17,11 +16,12 @@ const DISTANCE_SAVE_DEBOUNCE_MS = 300;
 const EMPTY_DRAFTS = Object.freeze({});
 
 function SportSelector({ sport, id, onSportChange, isMobile, drawerOpen, setDrawerOpen }) {
+  const { sports } = useSports();
   if (!isMobile) {
     return (
       <Select value={sport} onValueChange={(v) => onSportChange(id, v)}>
         <SelectTrigger className="h-10 text-sm font-medium rounded-xl flex-1"><SelectValue /></SelectTrigger>
-        <SelectContent>{EXERCISES.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}</SelectContent>
+        <SelectContent>{sports.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}</SelectContent>
       </Select>
     );
   }
@@ -40,7 +40,7 @@ function SportSelector({ sport, id, onSportChange, isMobile, drawerOpen, setDraw
           data-vaul-no-drag
           className="px-4 pb-[max(2rem,env(safe-area-inset-bottom))] space-y-1 max-h-[60dvh] overflow-y-auto overscroll-contain"
         >
-          {EXERCISES.map(ex => (
+          {sports.map(ex => (
             <button key={ex} type="button" onClick={() => { onSportChange(id, ex); setDrawerOpen(false); }}
               className={cn("w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-base font-medium transition-colors select-none", ex === sport ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
               {ex}{ex === sport && <Check className="w-4 h-4" strokeWidth={3} />}
