@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect, memo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { X, ChevronDown, Check, Flame, Dumbbell, Ruler, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,11 +10,18 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSports } from "@/lib/useSports";
 import DailyStreakCelebration from "@/components/tracker/DailyStreakCelebration";
+import { useLongPress } from '@/hooks/useLongPress';
+import { sessionTapIntent } from '@/lib/sessionInteractions';
+import WeeklyMedalStrip from '@/components/medals/WeeklyMedalStrip';
 
 const CENTRE = -100 / 3;
 const EASE = "cubic-bezier(0.22, 0.61, 0.36, 1)";
-const DISTANCE_SAVE_DEBOUNCE_MS = 300;
 const EMPTY_DRAFTS = Object.freeze({});
+
+function SessionButton({ date, interactive, onToggle, onOptions, ...props }) {
+  const gestures = useLongPress({ disabled: !interactive, onTap: origin => onToggle(date, origin), onHold: origin => onOptions(date, origin) });
+  return <button {...props} {...gestures} style={{ ...props.style, WebkitTouchCallout: 'none' }} disabled={!interactive} />;
+}
 
 function SportSelector({ sport, id, onSportChange, isMobile, drawerOpen, setDrawerOpen }) {
   const { sports } = useSports();
@@ -53,7 +60,8 @@ function SportSelector({ sport, id, onSportChange, isMobile, drawerOpen, setDraw
   );
 }
 
-const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftValues, onToggle, onDistanceChange, showSessionHighlights, sessionHighlightColor }) {
+/** @typedef {{ days: any[], interactive: boolean, trackDistance: boolean, draftValues: Record<string,string>, onToggle: Function, onOptions: Function, onDistanceChange: Function, showSessionHighlights: boolean, sessionHighlightColor: string }} DayGridProps */
+const DayGrid = memo(/** @param {DayGridProps} props */ function DayGrid({ days, interactive, trackDistance, draftValues, onToggle, onOptions, onDistanceChange, showSessionHighlights, sessionHighlightColor }) {
   return (
     <div
       className={cn("grid grid-cols-7 gap-1.5 shrink-0", !interactive && "pointer-events-none")}
@@ -61,9 +69,9 @@ const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftV
     >
       {days.map(day => (
         <div key={day.date} className="flex flex-col gap-1">
-          <button
+          <SessionButton
             type="button"
-            onClick={() => interactive && onToggle(day.date)}
+            date={day.date} interactive={interactive} onToggle={onToggle} onOptions={onOptions}
             style={day.isHighlighted && showSessionHighlights ? { outline: `2px solid ${sessionHighlightColor}`, outlineOffset: "-2px" } : undefined}
             aria-pressed={day.isCompleted}
             aria-label={`${day.date}${day.isHighlighted ? ", highlighted session" : ""}${day.isRecord ? `, distance record: ${day.distance} metres` : ""}`}
@@ -82,7 +90,9 @@ const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftV
             {day.isRecord ? <Trophy className="w-4 h-4 text-amber-950" aria-hidden="true" /> : <div className={cn("w-4 h-4 rounded-md border-2 flex items-center justify-center", day.isCompleted ? "bg-primary-foreground/20 border-primary-foreground" : "border-muted-foreground/30")}>
               {day.isCompleted && <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />}
             </div>}
-          </button>
+          </SessionButton>
+
+          {interactive && day.isCompleted && <button type="button" className="sr-only focus:not-sr-only focus:rounded-lg focus:p-1 focus:text-xs" onClick={e => onOptions(day.date, e.currentTarget)} aria-label={`Session options for ${day.date}`}>Options</button>}
 
           {trackDistance && day.isCompleted && (
             <input
@@ -92,6 +102,7 @@ const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftV
               enterKeyHint="done"
               autoComplete="off"
               placeholder="m"
+              aria-label={`Distance in metres for ${day.date}`}
               value={draftValues[day.date] ?? (day.distance != null ? String(day.distance) : "")}
               onChange={(e) => onDistanceChange(day.date, e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
@@ -107,12 +118,12 @@ const DayGrid = memo(function DayGrid({ days, interactive, trackDistance, draftV
 export default function SportTrackerRow({
   trackerSport, logs, addLog, removeLog, updateLog, currentWeekStart,
   onSportChange, onRemove, canRemove, isPrimary, trackDistance,
-  showSessionHighlights, sessionHighlightColor,
+  showSessionHighlights, sessionHighlightColor, onSessionIntent, medals, onOpenMedals,
   dragX = 0, phase = "idle",
 }) {
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [draftValues, setDraftValues] = useState({});
+  const draftValues = EMPTY_DRAFTS;
   const { sport, id } = trackerSport;
 
   const exerciseLogs = useMemo(() => logs.filter(l => l.exercise === sport), [logs, sport]);
@@ -162,36 +173,24 @@ export default function SportTrackerRow({
     return count;
   }, [exerciseLogs, currentWeekStart]);
 
-  const handleToggle = useCallback((dateStr) => {
+  const handleToggle = useCallback((dateStr, origin) => {
     const existing = logByDate[dateStr];
-    if (existing) {
-      removeLog(existing.id);
-      setDraftValues(prev => { const n = { ...prev }; delete n[dateStr]; return n; });
-    } else {
-      addLog(sport, dateStr);
-    }
-  }, [logByDate, removeLog, addLog, sport]);
-
-  const saveTimers = useRef({});
-  const logByDateRef = useRef(logByDate);
-  useEffect(() => { logByDateRef.current = logByDate; }, [logByDate]);
-  useEffect(() => () => {
-    Object.values(saveTimers.current).forEach(t => clearTimeout(t.timer));
-    Object.values(saveTimers.current).forEach(t => t.flush());
-  }, []);
-
+    const intent = sessionTapIntent(existing);
+    if (intent === 'confirm') onSessionIntent({ id: existing.id, mode: 'confirm', origin });
+    else if (intent === 'remove') removeLog(existing.id);
+    else addLog(sport, dateStr);
+  }, [logByDate, removeLog, addLog, sport, onSessionIntent]);
+  const handleOptions = useCallback((dateStr, origin) => {
+    const existing = logByDate[dateStr];
+    if (existing) onSessionIntent({ id: existing.id, mode: 'options', origin });
+  }, [logByDate, onSessionIntent]);
+  // Persist by exact ID immediately: no delayed save can cross sports or survive removal.
   const handleDistanceChange = useCallback((dateStr, raw) => {
     const cleaned = raw.replace(/[^\d]/g, "");
-    setDraftValues(prev => ({ ...prev, [dateStr]: cleaned }));
-
-    const flush = () => {
-      const log = logByDateRef.current[dateStr];
-      if (log) updateLog(log.id, { distance: cleaned === "" ? null : Number(cleaned) });
-      delete saveTimers.current[dateStr];
-    };
-    if (saveTimers.current[dateStr]) clearTimeout(saveTimers.current[dateStr].timer);
-    saveTimers.current[dateStr] = { flush, timer: setTimeout(flush, DISTANCE_SAVE_DEBOUNCE_MS) };
-  }, [updateLog]);
+    const log = logByDate[dateStr];
+    const value = cleaned === '' ? null : Number(cleaned);
+    if (log && (value === null || Number.isFinite(value))) updateLog(log.id, { distance: value });
+  }, [updateLog, logByDate]);
 
   let trackTransform;
   if (phase === "next")      trackTransform = "translateX(-66.6667%)";
@@ -240,6 +239,7 @@ export default function SportTrackerRow({
                 sessionHighlightColor={sessionHighlightColor}
                 draftValues={isCurrent ? draftValues : EMPTY_DRAFTS}
                 onToggle={handleToggle}
+                onOptions={handleOptions}
                 onDistanceChange={handleDistanceChange}
               />
             );
@@ -247,30 +247,8 @@ export default function SportTrackerRow({
         </div>
       </div>
 
-      {currentDays.some(day => day.isCompleted) && (
-        <details className="rounded-xl border bg-muted/20 p-3">
-          <summary className="cursor-pointer text-xs font-medium select-none">Session options</summary>
-          <div className="mt-3 space-y-3">
-            {currentDays.filter(day => day.isCompleted).map(day => (
-              <fieldset key={day.logId} className="space-y-1">
-                <legend className="text-xs font-medium">{day.name} {day.dayNumber}</legend>
-                <div className="flex flex-wrap gap-x-4 gap-y-1">
-                  <label className="flex items-center gap-2 py-2 text-xs cursor-pointer">
-                    <input type="checkbox" checked={day.excludePayment}
-                      onChange={e => updateLog(day.logId, { excludePayment: e.target.checked })} />
-                    Exclude Payment
-                  </label>
-                  <label className="flex items-center gap-2 py-2 text-xs cursor-pointer">
-                    <input type="checkbox" checked={day.isHighlighted}
-                      onChange={e => updateLog(day.logId, { highlighted: e.target.checked })} />
-                    Highlight Session
-                  </label>
-                </div>
-              </fieldset>
-            ))}
-          </div>
-        </details>
-      )}
+      <WeeklyMedalStrip medals={medals} sport={sport} weekStart={currentWeekStart} onOpen={onOpenMedals} />
+      <p className="text-[11px] text-muted-foreground">Hold a checked session for options.</p>
 
       {trackDistance && currentDays.some(d => d.isCompleted) && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">

@@ -17,6 +17,9 @@ import WeeklyGoalCard from "@/components/stats/WeeklyGoalCard";
 import RangeSelector from "@/components/stats/RangeSelector";
 import LifetimeStatsPanel from "@/components/tracker/LifetimeStatsPanel";
 import { useCostTracker } from "@/lib/useCostTracker";
+import { useMedals } from '@/lib/useMedals';
+import MedalCollection from '@/components/medals/MedalCollection';
+import MedalFlow from '@/components/medals/MedalFlow';
 
 const chartTypes = [
   { key: "bar", label: "Bar", icon: BarChart3 },
@@ -29,6 +32,8 @@ export default function Stats() {
   const [view, setView] = useState("chart");
   const [lifetimeCostOpen, setLifetimeCostOpen] = useState(false);
   const { logs: rawLogs } = useWorkoutLogs();
+  const [medalTarget, setMedalTarget] = useState(null);
+  const medals = useMedals(rawLogs);
   const { appSettings, updateSetting, setWeeklyGoal } = useAppSettings();
   const { settings: costSettings } = useCostTracker();
 
@@ -71,6 +76,8 @@ export default function Stats() {
       </div>
 
       <StatsCards logs={filteredLogs} />
+      <MedalCollection awards={medals} onOpen={setMedalTarget} />
+      {medalTarget && <MedalFlow target={medalTarget} awards={medals} onClose={() => setMedalTarget(null)} />}
 
       <div className="rounded-2xl bg-card border p-6 space-y-5">
         <div className="flex items-center justify-between">
