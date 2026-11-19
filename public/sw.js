@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pulsetrack-v5-medal-metals';
+const CACHE_NAME = 'pulsetrack-v6-streak-medals';
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/']))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('pulsetrack-') && k !== CACHE_NAME).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => {

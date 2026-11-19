@@ -1,5 +1,5 @@
-import { addDays, addYears, differenceInCalendarDays, format, isValid, parseISO, startOfWeek } from 'date-fns';
-import { DISTANCE_TIERS, MEDAL_BY_ID, medalAppearance, scopeForSport } from './catalog.js';
+import { addDays, addYears, differenceInCalendarDays, differenceInCalendarMonths, format, isValid, parseISO, startOfWeek } from 'date-fns';
+import { DISTANCE_TIERS, STREAK_TIERS, MEDAL_BY_ID, medalAppearance, scopeForSport } from './catalog.js';
 
 const dayKey = date => format(date, 'yyyy-MM-dd');
 const weekKey = date => dayKey(startOfWeek(parseISO(date), { weekStartsOn: 1 }));
@@ -39,6 +39,21 @@ export function evaluateMedals(logs, now = new Date()) {
       const [family, period] = key.split(':');
       const tiers = family === 'week' ? [3, 5] : family === 'month' ? [12, 20] : [100, 200];
       for (const tier of tiers) if (periodDays.length >= tier) emit(`${family}-${tier}`, scope, period, periodDays.slice(0, tier));
+    }
+    for (const [cadence, tiers] of Object.entries(STREAK_TIERS)) {
+      const keyFor = date => cadence === 'daily' ? date : cadence === 'weekly' ? weekKey(date) : `${date.slice(0, 7)}-01`;
+      const periods = [...new Map([...days].reverse().map(log => [keyFor(log.date), log])).values()].reverse();
+      let run = [], previous = null;
+      for (const log of periods) {
+        const key = keyFor(log.date);
+        const continuous = previous && (cadence === 'monthly'
+          ? differenceInCalendarMonths(parseISO(key), parseISO(previous)) === 1
+          : differenceInCalendarDays(parseISO(key), parseISO(previous)) === (cadence === 'weekly' ? 7 : 1));
+        if (!continuous) run = [];
+        run.push(log);
+        if (tiers.includes(run.length)) emit(`streak-${cadence}-${run.length}`, scope, keyFor(run[0].date), run, log.date, run.length);
+        previous = key;
+      }
     }
     for (const tier of [1, 10, 25, 50, 100, 250, 500, 1000]) if (days.length >= tier) emit(`active-${tier}`, scope, 'lifetime', days.slice(0, tier));
     for (const [definition, suffix] of [['fresh-start', '-01-01'], ['earth-day', '-04-22']]) {

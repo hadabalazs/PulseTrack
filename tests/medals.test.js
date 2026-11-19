@@ -82,3 +82,45 @@ test('metal difficulty follows each sport ladder without changing award identity
   assert.equal(MEDAL_CATALOG.find(d=>d.id==='month-20').metal,'gold');
   assert.equal(JSON.stringify(awards),snapshot);
 });
+test('daily streaks unlock at exact thresholds, repeat after a gap, and deduplicate dates', () => {
+  const first = days('2026-10-01', 8), second = days('2026-10-12', 7);
+  const logs = [...second, ...first, {...first[0],id:'duplicate-day'}].reverse();
+  const awards = matching(logs,'streak-daily-7','sport:Running');
+  assert.deepEqual(awards.map(a=>a.earnedDate).sort(),['2026-10-07','2026-10-18']);
+  assert.equal(new Set(awards.map(a=>a.awardId)).size,2);
+  assert.equal(awards.find(a=>a.earnedDate==='2026-10-07').evidenceLogIds.length,7);
+  assert.equal(matching(first.slice(0,6),'streak-daily-7').length,0);
+  assert.equal(matching(first.filter(l=>l.date!=='2026-10-04'),'streak-daily-7').length,0);
+  const extended = matching([...first,...days('2026-10-09',3)],'streak-daily-7','sport:Running');
+  assert.equal(extended[0].awardId,awards.find(a=>a.earnedDate==='2026-10-07').awardId);
+});
+test('weekly streaks use Monday calendar weeks and earliest workouts across year boundaries', () => {
+  const logs = ['2025-12-15','2025-12-22','2025-12-29','2026-01-04','2026-01-05','2026-01-06'].map(date=>log(date));
+  const award = matching(logs,'streak-weekly-4','sport:Running')[0];
+  assert.equal(award.earnedDate,'2026-01-05');assert.equal(award.periodKey,'2025-12-15');
+  assert.equal(award.evidenceLogIds.length,4);
+  assert.equal(matching(logs.filter(l=>l.date!=='2025-12-22'),'streak-weekly-4').length,0);
+});
+test('monthly streaks cross years, ignore repeated sessions and reset for missing months', () => {
+  const logs = ['2025-11-30','2025-12-30','2025-12-01','2026-01-20','2026-01-03','2026-03-01','2026-04-01','2026-05-01'].map(date=>log(date));
+  const awards = matching(logs,'streak-monthly-3','sport:Running');
+  assert.deepEqual(awards.map(a=>a.earnedDate).sort(),['2026-01-03','2026-05-01']);
+  assert.equal(matching(logs,'streak-monthly-6').length,0);
+  assert.equal(matching(logs.filter(l=>!l.date.startsWith('2025-12')),'streak-monthly-3','sport:Running').length,1);
+});
+test('streaks separate sport and aggregate scopes and exclude future workouts', () => {
+  const logs = [log('2026-11-01','Running'),log('2026-11-02','Swimming'),log('2026-11-03','Running')];
+  assert.equal(matching(logs,'streak-daily-3','all').length,1);
+  assert.equal(matching(logs,'streak-daily-3','sport:Running').length,0);
+  assert.equal(evaluateMedals(logs,new Date(2026,10,2,12)).filter(a=>a.definitionId==='streak-daily-3').length,0);
+  const awards=evaluateMedals(days('2026-01-01',30),now);
+  assert.deepEqual(groupMedals(awards,{scope:'sport:Running',family:'streaks'}).filter(g=>g.definition.cadence==='daily').map(g=>g.definition.metal).sort(),['bronze','gold','platinum','silver']);
+});
+test('weekly and monthly platinum thresholds require all consecutive periods', () => {
+  const weeks = Array.from({length:26},(_,i)=>log(format(addDays(new Date(2024,0,1,12),i*7),'yyyy-MM-dd')));
+  const months = Array.from({length:24},(_,i)=>log(`${2024+Math.floor(i/12)}-${String(i%12+1).padStart(2,'0')}-01`));
+  assert.equal(matching(weeks.slice(0,-1),'streak-weekly-26').length,0);
+  assert.equal(matching(weeks,'streak-weekly-26','sport:Running')[0].earnedDate,'2024-06-24');
+  assert.equal(matching(months.slice(0,-1),'streak-monthly-24').length,0);
+  assert.equal(matching(months,'streak-monthly-24','sport:Running')[0].earnedDate,'2025-12-01');
+});

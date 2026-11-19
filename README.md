@@ -13,7 +13,7 @@ PulseTrack is a responsive React app that keeps your workout history in your bro
 
 - **Weekly workout tracker** — log sessions by day across multiple sports, with swipe navigation between weeks.
 - **Session options** — hold a checked day (or right-click / Shift+F10) to highlight the session or exclude its payment. Tapping a session with an entered distance asks for confirmation before removing it; distance edits save immediately.
-- **Earned medals** — sport-specific weekly miniature strips, a continuous scrolling interactive collection, a rotating full-size inspector, and a Stats collection with dated repeat counts. Weekly, monthly, yearly, lifetime, and special awards are calculated from saved workouts. Yoga Day is not included.
+- **Earned medals** — sport-specific weekly miniature strips, a continuous scrolling interactive collection, a rotating full-size inspector, and a Stats collection with dated repeat counts. Daily, weekly, and monthly streak medals plus weekly, monthly, yearly, lifetime, and special awards are calculated from saved workouts. Yoga Day is not included.
 - **Custom sports** — add sports in Settings to use them in the tracker and subscription selectors.
 - **Optional distance tracking** — record metres per session and explore totals and rolling averages.
 - **Weekly distance goals** — set goals per sport, with goal history used for past weeks.
@@ -96,6 +96,8 @@ Data is stored in your browser's `localStorage`, separately for each site origin
 Clearing browser site data removes the stored data. Moving to another domain or browser does not transfer it. Keep backups of workout logs you want to retain.
 
 Workout data stays in the browser. The app loads its fonts from Google Fonts, so it makes external font requests when online.
+
+Streak medals progress from bronze to platinum: daily streaks of 3/7/14/30 active days, weekly streaks of 4/8/12/26 active Monday–Sunday weeks, and monthly streaks of 3/6/12/24 active calendar months. Weekly and monthly streaks require at least one workout in each period. They are evaluated for each sport and across all sports; each threshold is awarded once per uninterrupted run and can repeat after a gap. Existing history is included. The Stats collection shows all unlocked medals and counts without filters or explanatory copy.
 
 Medal eligibility is derived from workout history rather than stored as a separate ledger, so log backups also restore eligible medals. Counts represent distinct qualifying periods, with separate medals for each sport and threshold. Editing or removing the supporting workouts recalculates awards. Highlighting and excluding a payment do not affect qualification. Existing history is credited quietly, without a queue of old award popups.
 

@@ -56,6 +56,20 @@ export function createMedal(definition) {
     const count = definition.family === 'weekly' ? value : 1;
     if (definition.family === 'lifetime' && value > 1) number(group, value, m.metal, .75, .24, -.65, .28);
     else for (let i = 0; i < count; i++) rivet(group, (i - (count - 1) / 2) * .19, -.67, .28, m.metal);
+  } else if (recipe === 'streak') {
+    roundLayer(group, 1.12, m.metal, .24, -.14, .055);
+    roundLayer(group, .99, definition.cadence === 'daily' ? m.navy : definition.cadence === 'weekly' ? m.purple : m.green, .055, .15, .025);
+    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6;rivet(group, Math.cos(a) * .87, Math.sin(a) * .87, .27, m.metal, .024); }
+    if (definition.cadence === 'daily') {
+      const flame = new THREE.Shape();flame.moveTo(0,.86);flame.bezierCurveTo(.02,.48,.55,.43,.39,.06);flame.bezierCurveTo(.21,-.25,-.35,-.19,-.39,.12);flame.bezierCurveTo(-.48,.39,-.16,.48,-.17,.63);flame.bezierCurveTo(-.08,.56,-.08,.48,-.05,.43);flame.bezierCurveTo(.11,.57,-.07,.7,0,.86);
+      raised(group, flame, m.metal, .07, .28, .022);
+    } else if (definition.cadence === 'weekly') {
+      for (const offset of [-.2,.2]) line(group, Array.from({length:48},(_,i)=>{ const a=i/48*Math.PI*2;return [offset+Math.cos(a)*.29,.35+Math.sin(a)*.19,.34]; }), m.metal, .065, true);
+    } else {
+      const star = polygon(Array.from({length:10},(_,i)=>{ const a=Math.PI/2+i*Math.PI/5,r=i%2?.19:.4;return [Math.cos(a)*r,.35+Math.sin(a)*r]; }));
+      raised(group, star, m.metal, .07, .28, .018);
+    }
+    number(group, value, m.metal, 1.12, .43, -.49, .3);
   } else if (recipe === 'orbit') {
     roundLayer(group, 1.12, m.metal, .24, -.14, .055);roundLayer(group, 1.01, m.blue, .05, .15, .025);
     for (let i = 0; i < value; i++) {

@@ -1,4 +1,4 @@
-export const FAMILY_LABELS = { weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly', lifetime: 'Lifetime', special: 'Special' };
+export const FAMILY_LABELS = { weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly', lifetime: 'Lifetime', special: 'Special', streaks: 'Streaks' };
 const definitions = [];
 function add(id, title, family, rule, recipe, value = null, extra = {}) {
   definitions.push({ id, title, family, rule, recipe, value, version: 1, priority: definitions.length, ...extra });
@@ -23,6 +23,14 @@ add('earth-day', 'Earth Day', 'special', 'Log a workout on April 22.', 'leaf');
 add('first-year', 'Your First Year', 'special', 'Log a workout in the seven days starting on your first workout anniversary.', 'anniversary', 1);
 add('return', 'Back in Motion', 'special', 'Return after at least 14 complete days without a workout.', 'return');
 
+// A threshold is earned once per uninterrupted run, and can be earned again after a gap.
+export const STREAK_TIERS = { daily: [3, 7, 14, 30], weekly: [4, 8, 12, 26], monthly: [3, 6, 12, 24] };
+for (const [cadence, tiers] of Object.entries(STREAK_TIERS)) tiers.forEach((value, index) => {
+  const unit = cadence === 'daily' ? 'day' : cadence === 'weekly' ? 'week' : 'month';
+  const rule = cadence === 'daily' ? `${value} consecutive days with a workout.` : `${value} consecutive ${unit}s with at least one workout in each ${unit}${cadence === 'weekly' ? ' (Monday–Sunday)' : ' (calendar month)'}.`;
+  add(`streak-${cadence}-${value}`, `${value}-${unit[0].toUpperCase() + unit.slice(1)} Streak`, 'streaks', rule, 'streak', value, { cadence, metal: ['bronze', 'silver', 'gold', 'platinum'][index] });
+});
+
 export const METAL_LABELS = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', platinum: 'Platinum' };
 const metals = Object.keys(METAL_LABELS);
 const difficulty = {
@@ -33,7 +41,7 @@ const difficulty = {
   'active-250': 'gold', 'active-500': 'platinum', 'active-1000': 'platinum',
   'explore-5': 'silver', 'explore-8': 'gold', 'first-year': 'silver',
 };
-export const MEDAL_CATALOG = Object.freeze(definitions.map(definition => Object.freeze({ ...definition, metal: difficulty[definition.id] || 'bronze' })));
+export const MEDAL_CATALOG = Object.freeze(definitions.map(definition => Object.freeze({ ...definition, metal: definition.metal || difficulty[definition.id] || 'bronze' })));
 // Distance difficulty follows each sport's own progression, not raw kilometres.
 export function medalAppearance(definition, scope) {
   const tiers = DISTANCE_TIERS[scope?.slice(6)];

@@ -83,6 +83,7 @@ try {
   await page.getByRole('button',{name:/^Inspect /}).filter({has:page.locator('svg')}).first().click();await page.getByText('Achievement history',{exact:true}).waitFor();await page.locator('[data-render-ready="true"]').waitFor();
   assert.equal(await page.locator('[data-medal-stage]').count(),1);
   assert.equal(await page.getByRole('button',{name:'Reset view',exact:true}).count(),0);
+  assert.equal(await page.getByText(/arrow keys also work/).count(),0);
   await page.locator('[data-medal-stage]').focus();await page.keyboard.press('ArrowRight');await page.screenshot({path:`${output}/medal-inspector-mobile.png`});
   await page.goBack();await page.getByLabel('Medal period',{exact:true}).waitFor();assert.equal(await page.getByLabel('Medal period',{exact:true}).inputValue(),'all');
   await page.locator('[data-medal-stage]').last().scrollIntoViewIfNeeded();await page.waitForTimeout(200);
@@ -98,11 +99,15 @@ try {
   assert.ok(Math.abs(await page.locator('[data-modal-scroll]').evaluate(el=>el.scrollTop)-scrollBefore)<3);
   await page.getByRole('button',{name:'Close dialog'}).click();await dialog().waitFor({state:'hidden'});await page.waitForTimeout(100);
   await page.getByRole('link',{name:'Stats',exact:true}).last().click();await page.getByRole('region',{name:'Lifetime medal collection'}).waitFor();
-  await page.screenshot({path:`${output}/stats-medals-mobile.png`,fullPage:true});
+  const collection = page.getByRole('region',{name:'Lifetime medal collection'});
+  assert.equal(await collection.locator('select').count(),0);
+  assert.equal(await collection.getByText(/Each sport and threshold|Every achievement/).count(),0);
+  assert.ok(await collection.getByText('7-Day Streak',{exact:true}).count()>0);
+  await collection.scrollIntoViewIfNeeded();await page.screenshot({path:`${output}/stats-medals-mobile.png`});
   assert.ok(await page.getByText(/Achieved \d+ times?/).count()>0);
   await page.reload();assert.equal((await stored()).find(l=>l.id==='swim-16').distance,725);assert.equal((await stored()).find(l=>l.id==='run-16'),undefined);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  await page.setViewportSize({width:1280,height:960});await page.getByRole('button',{name:'Browse collection'}).click();await page.locator('[data-render-ready="true"]').waitFor();await page.screenshot({path:`${output}/medal-browser-desktop.png`});
+  await page.setViewportSize({width:1280,height:960});await page.getByRole('button',{name:'Browse collection'}).click();await page.locator('[data-render-ready="true"]').waitFor();await page.getByLabel('Medal category',{exact:true}).selectOption('streaks');await page.locator('[data-render-ready="true"]').waitFor();await page.screenshot({path:`${output}/medal-browser-desktop.png`});
   await page.getByRole('button',{name:/^Inspect /}).filter({has:page.locator('svg')}).first().click();await page.locator('[data-render-ready="true"]').waitFor();await page.screenshot({path:`${output}/medal-inspector-desktop.png`});
   await page.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await page.screenshot({path:`${output}/medal-inspector-dark.png`});
   assert.deepEqual(errors,[]);console.log('PASS: protected taps, options, long press, drafts, removal, sport strips, continuous collection, bounded canvas, scroll restoration, drag vs tap, inspector, browser back, repeat counts, reload, desktop/dark mode.');
