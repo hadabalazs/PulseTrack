@@ -101,7 +101,7 @@ export default function Settings() {
       </div>
 
       <div className="rounded-2xl bg-card border p-6 space-y-4">
-        <div><h3 className="font-display font-semibold">Session Highlights</h3><p className="text-sm text-muted-foreground mt-1">Mark individual sessions in the tracker's Session options.</p></div>
+        <div><h3 className="font-display font-semibold">Session Highlights</h3><p className="text-sm text-muted-foreground mt-1">Hold a checked session on the tracker to highlight it or exclude its payment.</p></div>
         <div className="flex items-center justify-between gap-3">
           <div><p className="text-sm font-medium">Show highlighted outlines</p><p className="text-xs text-muted-foreground mt-0.5">Hiding outlines keeps your marked sessions saved.</p></div>
           <Toggle label="Show highlighted outlines" checked={appSettings.showSessionHighlights} onChange={v => updateSetting("showSessionHighlights", v)} />
