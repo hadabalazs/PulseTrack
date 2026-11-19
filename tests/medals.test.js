@@ -124,3 +124,17 @@ test('weekly and monthly platinum thresholds require all consecutive periods', (
   assert.equal(matching(months.slice(0,-1),'streak-monthly-24').length,0);
   assert.equal(matching(months,'streak-monthly-24','sport:Running')[0].earnedDate,'2025-12-01');
 });
+test('52-week and 18-month streaks unlock exactly once at their thresholds', () => {
+  const weeks = Array.from({length:53},(_,i)=>log(format(addDays(new Date(2024,0,1,12),i*7),'yyyy-MM-dd')));
+  const months = Array.from({length:25},(_,i)=>log(`${2024+Math.floor(i/12)}-${String(i%12+1).padStart(2,'0')}-01`));
+  for (const [logs, id, count, earnedDate] of [[weeks,'streak-weekly-52',52,'2024-12-23'],[months,'streak-monthly-18',18,'2025-06-01']]) {
+    assert.equal(matching(logs.slice(0,count-1),id).length,0);
+    const awards=matching(logs,id,'sport:Running');
+    assert.equal(awards.length,1);assert.equal(awards[0].earnedDate,earnedDate);
+    assert.equal(awards[0].evidenceLogIds.length,count);
+    assert.equal(matching(logs.slice(0,count).filter((_,i)=>i!==5),id).length,0);
+    assert.equal(MEDAL_CATALOG.find(d=>d.id===id).metal,'platinum');
+  }
+  assert.equal(MEDAL_CATALOG.find(d=>d.id==='streak-monthly-24').metal,'platinum');
+  assert.equal(matching(months,'streak-monthly-24','sport:Running').length,1);
+});

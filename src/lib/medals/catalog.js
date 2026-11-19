@@ -24,11 +24,11 @@ add('first-year', 'Your First Year', 'special', 'Log a workout in the seven days
 add('return', 'Back in Motion', 'special', 'Return after at least 14 complete days without a workout.', 'return');
 
 // A threshold is earned once per uninterrupted run, and can be earned again after a gap.
-export const STREAK_TIERS = { daily: [3, 7, 14, 30], weekly: [4, 8, 12, 26], monthly: [3, 6, 12, 24] };
+export const STREAK_TIERS = { daily: [3, 7, 14, 30], weekly: [4, 8, 12, 26, 52], monthly: [3, 6, 12, 18, 24] };
 for (const [cadence, tiers] of Object.entries(STREAK_TIERS)) tiers.forEach((value, index) => {
   const unit = cadence === 'daily' ? 'day' : cadence === 'weekly' ? 'week' : 'month';
   const rule = cadence === 'daily' ? `${value} consecutive days with a workout.` : `${value} consecutive ${unit}s with at least one workout in each ${unit}${cadence === 'weekly' ? ' (Monday–Sunday)' : ' (calendar month)'}.`;
-  add(`streak-${cadence}-${value}`, `${value}-${unit[0].toUpperCase() + unit.slice(1)} Streak`, 'streaks', rule, 'streak', value, { cadence, metal: ['bronze', 'silver', 'gold', 'platinum'][index] });
+  add(`streak-${cadence}-${value}`, `${value}-${unit[0].toUpperCase() + unit.slice(1)} Streak`, 'streaks', rule, 'streak', value, { cadence, metal: ['bronze', 'silver', 'gold', 'platinum'][Math.min(index, 3)] });
 });
 
 export const METAL_LABELS = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', platinum: 'Platinum' };

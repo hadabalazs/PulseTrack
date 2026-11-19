@@ -97,7 +97,7 @@ Clearing browser site data removes the stored data. Moving to another domain or 
 
 Workout data stays in the browser. The app loads its fonts from Google Fonts, so it makes external font requests when online.
 
-Streak medals progress from bronze to platinum: daily streaks of 3/7/14/30 active days, weekly streaks of 4/8/12/26 active Monday–Sunday weeks, and monthly streaks of 3/6/12/24 active calendar months. Weekly and monthly streaks require at least one workout in each period. They are evaluated for each sport and across all sports; each threshold is awarded once per uninterrupted run and can repeat after a gap. Existing history is included. The Stats collection shows all unlocked medals and counts without filters or explanatory copy.
+Streak medals progress from bronze to platinum: daily streaks of 3/7/14/30 active days, weekly streaks of 4/8/12/26/52 active Monday–Sunday weeks, and monthly streaks of 3/6/12/18/24 active calendar months. Weekly and monthly streaks require at least one workout in each period. They are evaluated for each sport and across all sports; each threshold is awarded once per uninterrupted run and can repeat after a gap. Existing history is included. The Stats collection shows all unlocked medals and counts without filters or explanatory copy.
 
 Medal eligibility is derived from workout history rather than stored as a separate ledger, so log backups also restore eligible medals. Counts represent distinct qualifying periods, with separate medals for each sport and threshold. Editing or removing the supporting workouts recalculates awards. Highlighting and excluding a payment do not affect qualification. Existing history is credited quietly, without a queue of old award popups.
 
