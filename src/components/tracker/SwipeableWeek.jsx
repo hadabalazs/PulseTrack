@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { addWeeks, subWeeks } from "date-fns";
 
 const SWIPE_THRESHOLD = 55;
@@ -7,7 +7,7 @@ const RESISTANCE = 0.9;
 const MAX_DRAG = 200;
 export const SETTLE_MS = 280;
 
-export default function SwipeableWeek({ currentWeekStart, onWeekChange, children }) {
+export default function SwipeableWeek({ currentWeekStart, onWeekChange, children, disabled = false }) {
   const [dragX, setDragX] = useState(0);
   const [phase, setPhase] = useState("idle");
 
@@ -18,9 +18,17 @@ export default function SwipeableWeek({ currentWeekStart, onWeekChange, children
   const dxRef = useRef(0);
   const settleTimer = useRef(null);
 
+  useEffect(() => {
+    if (disabled) { active.current = false;clearTimeout(settleTimer.current);settleTimer.current = null;setPhase('idle');setDragX(0);dxRef.current = 0; }
+    return () => clearTimeout(settleTimer.current);
+  }, [disabled]);
+
   const setDrag = (v) => { dxRef.current = v; setDragX(v); };
 
   const onTouchStart = useCallback((e) => {
+    // React portal events bubble here too; picker gestures belong to the picker, not the week.
+    if (!e.currentTarget.contains(e.target)) return;
+    if (disabled || e.target.closest('[data-no-week-swipe]')) return;
     if (e.touches.length !== 1) return;
     const tag = e.target?.tagName;
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
@@ -30,7 +38,7 @@ export default function SwipeableWeek({ currentWeekStart, onWeekChange, children
     startY.current = e.touches[0].clientY;
     axis.current = null;
     active.current = true;
-  }, []);
+  }, [disabled]);
 
   const onTouchMove = useCallback((e) => {
     if (!active.current) return;

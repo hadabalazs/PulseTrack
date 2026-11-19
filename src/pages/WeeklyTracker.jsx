@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Plus, MoveHorizontal } from "lucide-react";
 import { useWorkoutLogs } from "@/lib/useWorkoutLogs";
 import { useTrackerSports } from "@/lib/useTrackerSports";
@@ -10,28 +10,36 @@ import WeekNavigator from "@/components/tracker/WeekNavigator";
 import SwipeableWeek from "@/components/tracker/SwipeableWeek";
 import SportTrackerRow from "@/components/tracker/SportTrackerRow";
 import CostTracker from "@/components/tracker/CostTracker";
-
-const EXERCISES = ["Running","Swimming","Cycling","Weight Training","Yoga","HIIT","Walking","Pilates","Football"];
+import { useSports } from "@/lib/useSports";
+import { useMedals } from '@/lib/useMedals';
+import SessionDialog from '@/components/tracker/SessionDialog';
+import MedalFlow from '@/components/medals/MedalFlow';
 
 export default function WeeklyTracker() {
+  const { sports } = useSports();
   const [currentWeekStart, setCurrentWeekStart] = useSelectedWeek();
   const { logs: rawLogs, addLog, updateLog, removeLog } = useWorkoutLogs();
   const { trackerSports, addTrackerSport, removeTrackerSport, updateTrackerSport } = useTrackerSports();
   const { appSettings } = useAppSettings();
   const isMobile = useIsMobile();
+  const [sessionTarget, setSessionTarget] = useState(null);
+  const [medalTarget, setMedalTarget] = useState(null);
+  const closeSession = useCallback(() => setSessionTarget(null), []);
+  const closeMedals = useCallback(() => setMedalTarget(null), []);
+  const medals = useMedals(rawLogs);
 
   const logs = useMemo(() => enrichLogs(rawLogs), [rawLogs]);
 
   const handleAddSport = () => {
     const used = new Set(trackerSports.map(s => s.sport));
-    addTrackerSport(EXERCISES.find(e => !used.has(e)) || EXERCISES[0]);
+    addTrackerSport(sports.find(e => !used.has(e)) || sports[0]);
   };
 
   return (
     <div className="space-y-4">
       <WeekNavigator currentWeekStart={currentWeekStart} onWeekChange={setCurrentWeekStart} />
 
-      <SwipeableWeek currentWeekStart={currentWeekStart} onWeekChange={setCurrentWeekStart}>
+      <SwipeableWeek currentWeekStart={currentWeekStart} onWeekChange={setCurrentWeekStart} disabled={!!sessionTarget || !!medalTarget}>
         {({ dragX, phase }) => (
           <div className="space-y-4">
             {trackerSports.map((ts, idx) => (
@@ -50,6 +58,9 @@ export default function WeeklyTracker() {
                 trackDistance={appSettings.trackDistance}
                 showSessionHighlights={appSettings.showSessionHighlights}
                 sessionHighlightColor={appSettings.sessionHighlightColor}
+                onSessionIntent={setSessionTarget}
+                medals={medals}
+                onOpenMedals={setMedalTarget}
                 dragX={dragX}
                 phase={phase}
               />
@@ -70,6 +81,8 @@ export default function WeeklyTracker() {
       </button>
 
       <CostTracker logs={logs} />
+      <SessionDialog target={sessionTarget} logs={rawLogs} onClose={closeSession} onOptions={setSessionTarget} updateLog={updateLog} removeLog={removeLog} />
+      {medalTarget && <MedalFlow target={medalTarget} awards={medals} onClose={closeMedals} />}
     </div>
   );
 }
