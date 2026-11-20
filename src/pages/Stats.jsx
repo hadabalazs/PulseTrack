@@ -17,6 +17,7 @@ import WeeklyGoalCard from "@/components/stats/WeeklyGoalCard";
 import RangeSelector from "@/components/stats/RangeSelector";
 import LifetimeStatsPanel from "@/components/tracker/LifetimeStatsPanel";
 import { useCostTracker } from "@/lib/useCostTracker";
+import { scopeForSport } from '@/lib/medals/catalog';
 import { useMedals } from '@/lib/useMedals';
 import MedalCollection from '@/components/medals/MedalCollection';
 import MedalFlow from '@/components/medals/MedalFlow';
@@ -76,7 +77,7 @@ export default function Stats() {
       </div>
 
       <StatsCards logs={filteredLogs} />
-      <MedalCollection awards={medals} onOpen={setMedalTarget} />
+      <MedalCollection awards={medals} scope={isFiltered ? scopeForSport(selectedSport) : 'all'} onOpen={setMedalTarget} />
       {medalTarget && <MedalFlow target={medalTarget} awards={medals} onClose={() => setMedalTarget(null)} />}
 
       <div className="rounded-2xl bg-card border p-6 space-y-5">

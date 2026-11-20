@@ -17,7 +17,7 @@ function Posters({ groups, onInspect }) {
 }
 
 export default function MedalFlow({ target, awards, onClose }) {
-  const [scope, setScope] = useState(target.scope ?? (target.sport ? scopeForSport(target.sport) : ''));
+  const [scope, setScope] = useState(target.scope ?? (target.sport ? scopeForSport(target.sport) : 'all'));
   const [period, setPeriod] = useState(target.weekStart ? 'week' : 'all');
   const [family, setFamily] = useState(target.family || ''), [selectedKey, setSelectedKey] = useState(target.selectedKey || null);
   const scrollRef = useRef(null), savedScroll = useRef(0), historyRef = useRef({ token: `medals-${Date.now()}`, depth: 0 });
